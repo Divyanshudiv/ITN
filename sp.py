@@ -1,13 +1,13 @@
 import spacy
 from spacy.matcher import Matcher
 
-# Load the English model
+# Load the model model
 nlp = spacy.load("en_core_web_sm")
 
 # Initialize the matcher
 matcher = Matcher(nlp.vocab)
 
-# Define patterns for numerical words (including multi-word patterns and Indian units)
+# Define patterns for numerical words 
 patterns = [
     [{"LOWER": "one"}], [{"LOWER": "two"}], [{"LOWER": "three"}], [{"LOWER": "four"}],
     [{"LOWER": "five"}], [{"LOWER": "six"}], [{"LOWER": "seven"}], [{"LOWER": "eight"}],
@@ -17,38 +17,7 @@ patterns = [
     [{"LOWER": "thirty"}], [{"LOWER": "forty"}], [{"LOWER": "fifty"}], [{"LOWER": "sixty"}],
     [{"LOWER": "seventy"}], [{"LOWER": "eighty"}], [{"LOWER": "ninety"}], [{"LOWER": "hundred"}],
     [{"LOWER": "thousand"}], [{"LOWER": "million"}], [{"LOWER": "billion"}],
-    [{"LOWER": "lakh"}], [{"LOWER": "crore"}],
-
-    # # Patterns for multi-word numerical expressions
-    # [{"LOWER": "one"}, {"LOWER": "hundred"}],
-    # [{"LOWER": "two"}, {"LOWER": "hundred"}],
-    # [{"LOWER": "three"}, {"LOWER": "hundred"}],
-    # [{"LOWER": "four"}, {"LOWER": "hundred"}],
-    # [{"LOWER": "five"}, {"LOWER": "hundred"}],
-    # [{"LOWER": "six"}, {"LOWER": "hundred"}],
-    # [{"LOWER": "seven"}, {"LOWER": "hundred"}],
-    # [{"LOWER": "eight"}, {"LOWER": "hundred"}],
-    # [{"LOWER": "nine"}, {"LOWER": "hundred"}],
-    # [{"LOWER": "ten"}, {"LOWER": "thousand"}],
-    # [{"LOWER": "hundred"}, {"LOWER": "thousand"}],
-    # [{"LOWER": "one"}, {"LOWER": "lakh"}],
-    # [{"LOWER": "two"}, {"LOWER": "lakh"}],
-    # [{"LOWER": "three"}, {"LOWER": "lakh"}],
-    # [{"LOWER": "four"}, {"LOWER": "lakh"}],
-    # [{"LOWER": "five"}, {"LOWER": "lakh"}],
-    # [{"LOWER": "six"}, {"LOWER": "lakh"}],
-    # [{"LOWER": "seven"}, {"LOWER": "lakh"}],
-    # [{"LOWER": "eight"}, {"LOWER": "lakh"}],
-    # [{"LOWER": "nine"}, {"LOWER": "lakh"}],
-    # [{"LOWER": "one"}, {"LOWER": "crore"}],
-    # [{"LOWER": "two"}, {"LOWER": "crore"}],
-    # [{"LOWER": "three"}, {"LOWER": "crore"}],
-    # [{"LOWER": "four"}, {"LOWER": "crore"}],
-    # [{"LOWER": "five"}, {"LOWER": "crore"}],
-    # [{"LOWER": "six"}, {"LOWER": "crore"}],
-    # [{"LOWER": "seven"}, {"LOWER": "crore"}],
-    # [{"LOWER": "eight"}, {"LOWER": "crore"}],
-    # [{"LOWER": "nine"}, {"LOWER": "crore"}]
+    [{"LOWER": "lakh"}], [{"LOWER": "crore"}]
 ]
 
 # Add patterns to the matcher
@@ -77,6 +46,5 @@ def extract_numerical_data(text):
     
     return [(span.text, "NUM") for span in merged_spans]
 
-# Test the function
-text = "I have four thousand five hundred sixty two dollars"
+text = "I have five hundred thirty two dollars and he has three thousand fifty"
 print(extract_numerical_data(text))

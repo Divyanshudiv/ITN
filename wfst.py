@@ -1,3 +1,6 @@
+import spacy
+from spacy.matcher import Matcher
+
 graph_input_category = {}
 
 class WFST:
@@ -249,56 +252,65 @@ composite_wfst.add_wfst('millions', millions_wfst)
 composite_wfst.add_wfst('billions', billions_wfst)
 composite_wfst.add_wfst('trillions', trillions_wfst)
 
-import nltk
-from nltk import word_tokenize, pos_tag
-from typing import List, Tuple
+# Load the English model
+nlp = spacy.load("en_core_web_sm")
 
-# Download necessary NLTK data (run this once)
-nltk.download('punkt')
-nltk.download('averaged_perceptron_tagger')
+# Initialize the matcher
+matcher = Matcher(nlp.vocab)
 
-def tokenize_and_tag(sentence: str) -> List[Tuple[str, str]]:
-    tokens = word_tokenize(sentence.lower())
-    return pos_tag(tokens)
+# Define patterns for numerical words (including multi-word patterns and Indian units)
+patterns = [
+    [{"LOWER": "one"}], [{"LOWER": "two"}], [{"LOWER": "three"}], [{"LOWER": "four"}],
+    [{"LOWER": "five"}], [{"LOWER": "six"}], [{"LOWER": "seven"}], [{"LOWER": "eight"}],
+    [{"LOWER": "nine"}], [{"LOWER": "ten"}], [{"LOWER": "eleven"}], [{"LOWER": "twelve"}],
+    [{"LOWER": "thirteen"}], [{"LOWER": "fourteen"}], [{"LOWER": "fifteen"}], [{"LOWER": "sixteen"}],
+    [{"LOWER": "seventeen"}], [{"LOWER": "eighteen"}], [{"LOWER": "nineteen"}], [{"LOWER": "twenty"}],
+    [{"LOWER": "thirty"}], [{"LOWER": "forty"}], [{"LOWER": "fifty"}], [{"LOWER": "sixty"}],
+    [{"LOWER": "seventy"}], [{"LOWER": "eighty"}], [{"LOWER": "ninety"}], [{"LOWER": "hundred"}],
+    [{"LOWER": "thousand"}], [{"LOWER": "million"}], [{"LOWER": "billion"}],
+    [{"LOWER": "lakh"}], [{"LOWER": "crore"}]
+]
 
-def identify_number_phrases(tagged_tokens: List[Tuple[str, str]]) -> List[Tuple[int, int]]:
-    number_words = set([
-        'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
-        'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen',
-        'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety',
-        'hundred', 'thousand', 'million', 'billion', 'trillion'
-    ])
-    
-    phrases = []
-    start = -1
-    for i, (token, pos) in enumerate(tagged_tokens):
-        if token in number_words or pos == 'CD':  # CD is the POS tag for cardinal numbers
-            if start == -1:
-                start = i
-        elif start != -1:
-            phrases.append((start, i))
-            start = -1
-    
-    if start != -1:
-        phrases.append((start, len(tagged_tokens)))
-    
-    return phrases
+# Add patterns to the matcher
+for pattern in patterns:
+    matcher.add("NUMERIC_WORDS", [pattern])
 
-def process_sentence(sentence: str, composite_wfst: CompositeWFST) -> str:
-    tagged_tokens = tokenize_and_tag(sentence)
-    number_phrases = identify_number_phrases(tagged_tokens)
+# Define the custom NER function
+def extract_numerical_data(text):
+    doc = nlp(text)
+    matches = matcher(doc)
+    spans = [doc[start:end] for match_id, start, end in matches]
     
-    tokens = [token for token, _ in tagged_tokens]
+    # Sort spans by start position
+    spans = sorted(spans, key=lambda span: span.start)
     
-    for start, end in reversed(number_phrases):
-        number_words = tokens[start:end]
-        normalized = composite_wfst.process(number_words)
-        if normalized:
-            tokens[start:end] = [normalized[1]]  # Replace with normalized number
+    # Merge contiguous spans
+    merged_spans = []
+    current_span = spans[0]
+    for span in spans[1:]:
+        if span.start <= current_span.end:
+            current_span = doc[current_span.start:span.end]
+        else:
+            merged_spans.append(current_span)
+            current_span = span
+    merged_spans.append(current_span)
     
-    return ' '.join(tokens)
+    return [(span.text, "NUM") for span in merged_spans]
 
-# Example usage
-sentence = "The shoes cost three hundred dollars and fifty cents"
-result = process_sentence(sentence, composite_wfst)
-print(result)
+def tokenize(input_sequence):
+    input_sequence_list = []
+    buffer = []
+    num_states = 0
+    for itr in reversed(input_sequence):
+        wfst = (composite_wfst.wfsts.get(graph_input_category.get(itr))).states
+        if len(wfst) >= num_states and buffer != []:
+            num_states = len(wfst)
+            input_sequence_list.insert(0, buffer)
+            buffer = []
+            buffer.insert(0, itr)
+        else:
+            if buffer == []:
+                num_states = len(wfst)
+            buffer.insert(0, itr)
+    input_sequence_list.insert(0, buffer)
+    return input_sequence_list
