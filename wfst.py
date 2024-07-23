@@ -35,13 +35,14 @@ class WFST:
         current_weight = 0
         next_states = []
         for state in self.states:
+            if state not in self.final_state:
                 values = list(self.states[state].values())
-                print('values:', values)
+                #print('values:', values)
                 next_state = 0
                 output_symbol = ''
                 weight = 10**10
                 for itr in values:
-                    print(itr)
+                    #print(itr)
                     for (buffer_next_state, buffer_output_symbol, buffer_weight) in itr:
                         if weight >= buffer_weight:
                             next_state = buffer_next_state
@@ -51,7 +52,7 @@ class WFST:
                 current_output += output_symbol
                 current_weight += weight
 
-        print(next_states)
+        #print(next_states)
         return next_states[len(next_states) - 1]
 
     def compose(self, other, input):
@@ -68,9 +69,19 @@ class WFST:
             i = i - len(other.states) + 1
         for s1 in other.states:
             if s1 not in other.final_state:
-                if input in other.states[s1]:
-                    for (next_state, output_symbol, weight) in other.states[s1][input]:
-                        result.add_transition(i, i + 1, input, output_symbol, weight)
+                if input == []:
+                    symbol = None
+                elif isinstance(input, list):
+                    symbol = input[0]
+                else:
+                    symbol = input
+                #print(input)
+                #print(other.states[s1])
+                if symbol in other.states[s1]:
+                    for (next_state, output_symbol, weight) in other.states[s1][symbol]:
+                        result.add_transition(i, i + 1, symbol, output_symbol, weight)
+                        if isinstance(input, list):
+                            input.pop(0)
                 elif '' in other.states[s1]:
                     for (next_state, output_symbol, weight) in other.states[s1]['']:
                         result.add_transition(i, i + 1, '', output_symbol, weight)
@@ -78,7 +89,30 @@ class WFST:
             i += 1
 
         result.add_final_state(i - 1)
-        print(result.states)
+        #print(result.states)
+        return result
+    
+    def compose_alt(self, other):
+        result = WFST(self.category + other.category)
+        result.set_start_state(0)
+        i = 0
+        for s1 in self.states:
+            i = s1  
+            if s1 not in self.final_state:
+                for symbol1 in self.states[s1]:
+                    for (n1, o1, w1) in self.states[s1][symbol1]:
+                        result.add_transition(i, i + 1, symbol1, o1, w1)
+        if len(self.states) > len(other.states):
+            i = i - len(other.states) + 1
+        for s1 in other.states:
+            if s1 not in other.final_state:
+                for symbol1 in other.states[s1]:
+                    for (n1, o1, w1) in other.states[s1][symbol1]:
+                        result.add_transition(i, i + 1, symbol1, o1, w1)
+            i += 1
+
+        result.add_final_state(i - 1)
+        #print(result.states)
         return result
 
 class CompositeWFST:
@@ -88,7 +122,7 @@ class CompositeWFST:
     def add_wfst(self, key, wfst):
         self.wfsts[key] = wfst
     
-    def process(self, input_sequence):
+    def compose(self, input_sequence):
         if not input_sequence:
             return []
 
@@ -115,7 +149,9 @@ class CompositeWFST:
             else:
                 return []
 
-        return composed_wfst.process(input_sequence)
+        return composed_wfst
+
+
 
 # Units WFST
 units_wfst = WFST('units')
