@@ -15,7 +15,6 @@ final_result = []
 if user_input:
     try:
         classified_text = extract_numerical_data(user_input)
-        print(classified_text)
         if classified_text and len(classified_text) > 0 and len(classified_text[0]) > 0:
             for j in range(len(classified_text)):
                 split_strings = classified_text[j][0].split()
