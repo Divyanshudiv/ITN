@@ -33,6 +33,14 @@ class WFST:
     def add_epsilon_transition(self, from_state, to_state, output_symbol, weight=0):
         self.add_transition(from_state, to_state, '', output_symbol, weight)
 
+    def insert(self, start_state, num_transitions, output_symbol):
+        current_state = start_state
+        for i in range(num_transitions):
+            new_state = current_state + 1
+            self.add_epsilon_transition(current_state, new_state, output_symbol)
+            current_state = new_state
+        self.add_final_state(current_state)
+
     def process(self, input_sequence): 
         current_output = ''
         current_weight = 0
@@ -40,12 +48,10 @@ class WFST:
         for state in self.states:
             if state not in self.final_state:
                 values = list(self.states[state].values())
-                #print('values:', values)
                 next_state = 0
                 output_symbol = ''
                 weight = 10**10
                 for itr in values:
-                    #print(itr)
                     for (buffer_next_state, buffer_output_symbol, buffer_weight) in itr:
                         if weight >= buffer_weight:
                             next_state = buffer_next_state
@@ -55,7 +61,6 @@ class WFST:
                 current_output += output_symbol
                 current_weight += weight
 
-        #print(next_states)
         return next_states[len(next_states) - 1]
 
     def compose(self, other, input):
@@ -78,8 +83,6 @@ class WFST:
                     symbol = input[0]
                 else:
                     symbol = input
-                #print(input)
-                #print(other.states[s1])
                 if symbol in other.states[s1]:
                     for (next_state, output_symbol, weight) in other.states[s1][symbol]:
                         result.add_transition(i, i + 1, symbol, output_symbol, weight)
@@ -92,7 +95,6 @@ class WFST:
             i += 1
 
         result.add_final_state(i - 1)
-        #print(result.states)
         return result
     
     def compose_alt(self, other):
@@ -115,8 +117,28 @@ class WFST:
             i += 1
 
         result.add_final_state(i - 1)
-        #print(result.states)
         return result
+    
+    def output(self, wfst, input_sequence):
+        if not isinstance(wfst, CompositeWFST):
+            composite_wfst = CompositeWFST()
+            composite_wfst.add_wfst('name', wfst)
+        else:
+            composite_wfst = wfst
+        
+        wfst_sequence = []
+        for itr in input_sequence:
+            wfst = composite_wfst.compose(itr)
+            wfst_sequence.append(wfst)
+
+        composite_wfst = wfst_sequence[0]
+        for i in range(1, len(wfst_sequence)):
+            composite_wfst= composite_wfst.compose_alt(wfst_sequence[i])
+        print(input_sequence)
+        result = composite_wfst.process(input_sequence)
+
+        return result
+
 
 class CompositeWFST:
     def __init__(self):
@@ -141,7 +163,6 @@ class CompositeWFST:
                     composed_wfst.add_transition(i, next_state, '', output_symbol, weight)
                     break
 
-        #composed_wfst = self.wfsts.get(graph_input_category.get(input_sequence[0]))
         if not composed_wfst:
             return []
 
@@ -153,7 +174,19 @@ class CompositeWFST:
                 return []
 
         return composed_wfst
+    
+    def output(self, composite_wfst, input_sequence):
+        wfst_sequence = []
+        for itr in input_sequence:
+            wfst = composite_wfst.compose(itr)
+            wfst_sequence.append(wfst)
 
+        composite_wfst = wfst_sequence[0]
+        for i in range(1, len(wfst_sequence)):
+            composite_wfst= composite_wfst.compose_alt(wfst_sequence[i])
+        result = composite_wfst.process(input_sequence)
+
+        return result
 
 
 # Units WFST

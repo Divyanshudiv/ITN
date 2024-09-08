@@ -25,15 +25,7 @@ if user_input:
 
                 input = tokenize(result_list)
 
-                wfst_sequence = []
-                for itr in input:
-                    wfst = composite_wfst.compose(itr)
-                    wfst_sequence.append(wfst)
-
-                composed_wfst = wfst_sequence[0]
-                for i in range(1, len(wfst_sequence)):
-                    composed_wfst = composed_wfst.compose_alt(wfst_sequence[i])
-                result = composed_wfst.process(result_list)
+                result = composite_wfst.output(composite_wfst, input)
                 final_result.append(result)
     except Exception as e:
         st.error(f"An error occurred: {e}")
