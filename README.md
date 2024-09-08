@@ -1,6 +1,6 @@
 # Inverse Text Normalization (ITN) with WFST
 
-This project implements a Weighted Finite State Transducer (WFST) model for performing Inverse Text Normalization (ITN) on tokenized text, such as numbers, abbreviations, and similar sequences. The WFST model can handle tasks in multiple languages, including English and Hindi, with a focus on numerical conversions.
+This project implements a Weighted Finite State Transducer (WFST) model for performing Inverse Text Normalization (ITN) on tokenized text, such as numbers, abbreviations, and similar sequences. The WFST model can handle tasks in multiple languages, including English, Hindi and other indic and non indic laguages.
 
 ## Project Structure
 
@@ -14,8 +14,8 @@ This project implements a Weighted Finite State Transducer (WFST) model for perf
 
 1. **Clone the repository**:
    ```bash
-   git clone <repository-url>
-   cd <repository-directory>
+   git clone https://github.com/Divyanshudiv/ITN
+   cd ITN
    ```
 
 2. **Create a virtual environment: Use Python’s venv module to create an isolated environment for the project**:
